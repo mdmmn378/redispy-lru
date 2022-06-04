@@ -124,7 +124,8 @@ if __name__ == "__main__":
     print(time.time() - prev_time)
     prev_time = time.time()
     print(fib_wo_cache(10))
-    print(time.time() - prev_time) # Issue: slow downs the program
+    print(time.time() - prev_time)
+    # TODO #4
     print(hello("World"))
 
     # time.sleep(10)
