@@ -57,7 +57,10 @@ class RedisLRUCache(object):
 
 
 def redis_lru(func=None, expire=None):
-    cache = RedisLRUCache(max_size=os.environ.get("REDIS_LRU_CACHE_SIZE", 10000))
+    cache = RedisLRUCache(
+        host=os.environ.get("REDIS_URL", "localhost"),
+        max_size=os.environ.get("REDIS_LRU_CACHE_SIZE", 10000),
+    )
 
     def generate_key(func):
         return func.__name__
@@ -81,50 +84,14 @@ def redis_lru(func=None, expire=None):
             key = generate_key(func)
             value = cache.get(key, args, kwargs)
             if value != NotCached:
-                print("cache hit")
+                # print("cache hit")
                 update_cache(key, value, *args, **kwargs)
                 return value["output"]
             value_ = generate_value(func, *args, **kwargs)
             cache.set(key, value_)
-            print("cache miss")
+            # print("cache miss")
             return tuple(json.loads(value_).items())[0][1]["output"]
 
         return wrapper
 
     return decorator if func is None else decorator(func)
-
-
-cache = RedisLRUCache(max_size=100)
-
-
-@redis_lru(expire=100)
-def fib(n):
-    if n < 2:
-        return 1
-    return fib(n - 1) + fib(n - 2)
-
-
-def fib_wo_cache(n):
-    if n < 2:
-        return 1
-    return fib_wo_cache(n - 1) + fib_wo_cache(n - 2)
-
-
-@redis_lru(expire=10)
-def hello(name):
-    import time
-
-    time.sleep(3)
-    return "Hello " + name
-
-
-if __name__ == "__main__":
-    prev_time = time.time()
-    print(fib(10))
-    print(time.time() - prev_time)
-    prev_time = time.time()
-    print(fib_wo_cache(10))
-    print(time.time() - prev_time) # Issue: slow downs the program
-    print(hello("World"))
-
-    # time.sleep(10)
